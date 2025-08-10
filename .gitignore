@@ -1,0 +1,33 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+
+# Virtual environment
+venv/
+.env/        # your environment variables file
+*.env
+
+# IDE/editor settings
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Compiled files
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# SQLite database (if local)
+*.sqlite3
+instance/
+
+# MacOS system files
+.DS_Store
