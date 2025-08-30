@@ -6,6 +6,8 @@ import qdrant_client.models as models
 import json
 from dotenv import load_dotenv
 import os
+from openai import OpenAI
+
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
@@ -15,7 +17,7 @@ EMBEDDING_DIM = 384
 # EMBEDDING_MODEL_NAME = "deepseek-embedding-v1.0"  
 # DEEPSEEK_API_URL = "https://api.deepseek.com/v1/embeddings"
 
-client = QdrantClient(url=QRANT_URL, api_key=QDRANT_API_KEY)
+qdrant = QdrantClient(url=QRANT_URL, api_key=QDRANT_API_KEY)
 collection_name = "Math_knowledge_base"
 model_name = "BAAI/bge-small-en-v1.5"
 # client.create_collection(
@@ -32,6 +34,19 @@ HEADERS = {
 }
 
 app = Flask(__name__)
+
+def query_mistral(prompt):
+    """Send a query to Mistral API."""
+    mistral = OpenAI(
+    base_url="https://api.mistral.ai/v1",
+    api_key="w13B1HqDArHD1O25vHjqK5bgSfmFGhU2"
+)
+    response =mistral.chat.completions.create(
+        model="mistral-small-latest",
+        messages=[{"role": "user", "content": prompt}],
+        stream=False,
+    )
+    return response.choices[0].message.content
 
 
 def query_deepseek(prompt):
@@ -59,7 +74,7 @@ def ask():
         return jsonify({"error": "Missing 'question' field"}), 400
 
     question = data["question"]
-    results = client.query_points(
+    results = qdrant.query_points(
             collection_name=collection_name,
             query=models.Document(text=question, model=model_name),
             limit=5,
@@ -81,7 +96,7 @@ def ask():
 
     metaprompt = f"""
     You are a Math tutor with years of experience in explaining complex equations to young kids who never saw them before.
-    Answer the following question using the provided context. 
+    Answer the following question using the provided context. the student might not be familiar with the topics so he might just send a one word question so you just take the context and explain it to him in a simple way. and answer in arabic. 
     If you can't find the answer, do not pretend you know it, but answer "I don't know".
 
     Question: {question.strip()}
@@ -92,7 +107,7 @@ def ask():
     Answer:
     """
 
-    answer = query_deepseek(metaprompt)
+    answer = query_mistral(metaprompt)
 
     return jsonify({
         "question": question,
